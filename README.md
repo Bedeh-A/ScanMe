@@ -35,6 +35,7 @@
 - Runs a fast scan first, followed by deeper rotation, inversion, and denoising
   passes.
 - Highlights every result over the source image and lets you copy or open values.
+- Exports decoded results and their image positions as CSV or JSON.
 - Extracts English text locally with optional Tesseract.js OCR.
 - Keeps an optional 30-day scan history in IndexedDB without storing screenshots.
 - Installs as a PWA and works offline after its required assets are cached.

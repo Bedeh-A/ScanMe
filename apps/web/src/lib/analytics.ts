@@ -10,6 +10,7 @@ type AnalyticsEvent =
   | "ocr_completed"
   | "ocr_failed"
   | "scan_history_toggled"
+  | "results_exported"
   | "report_submitted";
 
 type AnalyticsProperties = {
@@ -20,6 +21,7 @@ type AnalyticsProperties = {
   reason?: "invalid-file" | "decode-error";
   textLength?: "0" | "1-100" | "101-500" | "501+";
   enabled?: boolean;
+  exportFormat?: "csv" | "json";
 };
 
 const allowedEvents = new Set<AnalyticsEvent>([
@@ -30,6 +32,7 @@ const allowedEvents = new Set<AnalyticsEvent>([
   "ocr_completed",
   "ocr_failed",
   "scan_history_toggled",
+  "results_exported",
   "report_submitted",
 ]);
 

@@ -4,6 +4,7 @@ import {
   Check,
   Clipboard,
   Copy,
+  Download,
   ExternalLink,
   FileImage,
   History,
@@ -30,6 +31,10 @@ import {
 
 import { ReportScanDialog } from "@/components/report-scan-dialog";
 import { countBucket, durationBucket, textLengthBucket, track } from "@/lib/analytics";
+import {
+  downloadBarcodeResults,
+  type BarcodeExportFormat,
+} from "@/lib/barcodes/export-results";
 import {
   ImageInputError,
   imageFromClipboard,
@@ -377,6 +382,11 @@ function HomeComponent() {
     await copyValue("all", text);
   };
 
+  const exportResults = (format: BarcodeExportFormat) => {
+    downloadBarcodeResults(results, format);
+    track("results_exported", { exportFormat: format });
+  };
+
   return (
     <main className="min-h-screen bg-[#f5f4ee] text-[#17352b]">
       <header className="border-b border-[#17352b]/10 px-5 py-4 sm:px-8">
@@ -605,7 +615,7 @@ function HomeComponent() {
                       />
                     ))}
                   </div>
-                  <div className="border-t border-[#17352b]/10 p-4">
+                  <div className="space-y-2 border-t border-[#17352b]/10 p-4">
                     <button
                       type="button"
                       onClick={() => void copyAll()}
@@ -614,6 +624,19 @@ function HomeComponent() {
                       {copiedId === "all" ? <Check className="size-4" /> : <Copy className="size-4" />}
                       {copiedId === "all" ? "Copied all results" : "Copy all results"}
                     </button>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["csv", "json"] as const).map((format) => (
+                        <button
+                          key={format}
+                          type="button"
+                          onClick={() => exportResults(format)}
+                          className="flex h-10 items-center justify-center gap-2 rounded-xl border border-[#17352b]/15 bg-white text-xs font-bold uppercase tracking-wider text-[#567166] transition hover:border-[#17352b]/30 hover:bg-[#f5f4ee] hover:text-[#17352b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f35f32]"
+                        >
+                          <Download className="size-3.5" />
+                          Export {format}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </>
               ) : status === "done" ? (
