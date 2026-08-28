@@ -1,22 +1,32 @@
-# Scanme
+<div align="center">
+  <img src="apps/web/public/icon.svg" width="72" alt="Scanme logo">
+  <h1>Scanme</h1>
+  <p><strong>Find every barcode in one screenshot.</strong></p>
+  <p>
+    Paste, drop, or upload an image and detect multiple 1D and 2D barcodes<br>
+    privately in your browser—even offline.
+  </p>
+  <p>
+    <a href="https://scan.bedeh.ro"><strong>Open the live app</strong></a>
+    ·
+    <a href="https://github.com/Bedeh-A/ScanMe/issues">Report an issue</a>
+  </p>
+  <p>
+    <img src="https://img.shields.io/badge/processing-local--first-17352b" alt="Local-first processing">
+    <img src="https://img.shields.io/badge/PWA-installable-f35f32" alt="Installable PWA">
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-17352b" alt="MIT License"></a>
+  </p>
+</div>
 
-Scan every barcode in a screenshot—privately, locally, and offline.
+<br>
 
-[![MIT License](https://img.shields.io/badge/license-MIT-17352b.svg)](LICENSE)
+<div align="center">
+  <img src="docs/screenshots/scanner-desktop.png" width="72%" alt="Scanme desktop scanner">
+  &nbsp;
+  <img src="docs/screenshots/scanner-mobile.png" width="23%" alt="Scanme mobile scanner">
+</div>
 
-Scanme is an installable web app for finding multiple 1D and 2D barcodes in a
-single image. Paste from the clipboard, drag and drop, or choose a screenshot;
-decoding runs in the browser without sending the image to a server.
-
-## Screenshots
-
-### Desktop
-
-![Scanme desktop scanner](docs/screenshots/scanner-desktop.png)
-
-### Mobile
-
-<img src="docs/screenshots/scanner-mobile.png" alt="Scanme mobile scanner" width="390">
+<p align="center"><sub>Designed for desktop workflows and installable on mobile.</sub></p>
 
 ## What it does
 
