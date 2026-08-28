@@ -9,6 +9,7 @@ import {
   type ReportSubmissionMetadata,
   type ReportUploadResponse,
 } from "@/lib/reports/types";
+import { APP_VERSION } from "@/lib/version";
 
 interface TurnstileApi {
   render(
@@ -169,7 +170,7 @@ export function ReportScanDialog({
       detectedCount,
       detectedFormats,
       source,
-      appVersion: import.meta.env.VITE_APP_VERSION || "development",
+      appVersion: APP_VERSION,
       ...(note.trim() ? { note: note.trim() } : {}),
     };
     const body = new FormData();

@@ -1,4 +1,4 @@
-import posthog from "posthog-js";
+import type { PostHog } from "posthog-js";
 
 import type { ScanSource } from "./barcodes/types";
 
@@ -22,46 +22,69 @@ type AnalyticsProperties = {
   enabled?: boolean;
 };
 
-let initialized = false;
+const allowedEvents = new Set<AnalyticsEvent>([
+  "app_opened",
+  "scan_started",
+  "scan_completed",
+  "scan_failed",
+  "ocr_completed",
+  "ocr_failed",
+  "scan_history_toggled",
+  "report_submitted",
+]);
+
+let client: PostHog | null = null;
+let initializing = false;
 
 export function initializeAnalytics(): void {
   const key = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
-  const host = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
-
-  if (!key || !host) {
-    if (import.meta.env.DEV) {
-      const variable = key ? "VITE_PUBLIC_POSTHOG_HOST" : "VITE_PUBLIC_POSTHOG_KEY";
-      throw new Error(
-        `${variable} variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once ${variable} is configured`,
-      );
-    }
+  if (!key || client || initializing) {
     return;
   }
 
-  if (initialized) return;
+  initializing = true;
+  void import("posthog-js")
+    .then(({ default: posthog }) => {
+      posthog.init(key, {
+        api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com",
+        ui_host: "https://eu.posthog.com",
+        autocapture: false,
+        capture_pageview: false,
+        capture_pageleave: false,
+        capture_heatmaps: false,
+        capture_dead_clicks: false,
+        capture_performance: false,
+        capture_exceptions: false,
+        disable_session_recording: true,
+        person_profiles: "never",
+        cookieless_mode: "always",
+        advanced_disable_flags: true,
+        before_send(event) {
+          if (!event || !allowedEvents.has(event.event as AnalyticsEvent)) {
+            return null;
+          }
 
-  posthog.init(key, {
-    api_host: host,
-    autocapture: false,
-    capture_heatmaps: false,
-    capture_dead_clicks: false,
-    capture_performance: {
-      web_vitals: true,
-      network_timing: false,
-    },
-    capture_exceptions: {
-      capture_unhandled_errors: true,
-      capture_unhandled_rejections: true,
-      capture_console_errors: false,
-    },
-  });
-  initialized = true;
-  track("app_opened");
+          delete event.properties.$current_url;
+          delete event.properties.$pathname;
+          delete event.properties.$referrer;
+          delete event.properties.$referring_domain;
+          return event;
+        },
+      });
+      client = posthog;
+      track("app_opened");
+    })
+    .catch(() => {
+      // Analytics must never interfere with the scanner.
+    })
+    .finally(() => {
+      initializing = false;
+    });
 }
 
 export function track(event: AnalyticsEvent, properties: AnalyticsProperties = {}): void {
-  if (!initialized) return;
-  posthog.capture(event, properties);
+  if (!client || !navigator.onLine) return;
+  client.capture(event, properties);
 }
 
 export function durationBucket(milliseconds: number): AnalyticsProperties["duration"] {

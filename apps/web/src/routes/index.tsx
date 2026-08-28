@@ -53,6 +53,7 @@ import {
   type HistoryEntry,
 } from "@/lib/history";
 import { recognizeText, type OcrWorkerHandle } from "@/lib/ocr";
+import { APP_VERSION } from "@/lib/version";
 
 export const Route = createFileRoute("/")({
   component: HomeComponent,
@@ -756,9 +757,26 @@ function HomeComponent() {
           <Feature icon={<Barcode className="size-4" />} title="Broad support" text="Common linear and matrix formats." />
         </div>
 
-        <footer className="mt-12 flex flex-col gap-2 border-t border-[#17352b]/10 pt-5 text-xs leading-5 text-[#789087] sm:flex-row sm:items-center sm:justify-between">
-          <p>Scans happen locally—even offline. Bug reports upload only with your consent.</p>
-          <p>Anonymous scan-performance metrics may be collected. Never images or decoded values.</p>
+        <footer className="mt-12 flex flex-col gap-4 border-t border-[#17352b]/10 pt-5 text-xs leading-5 text-[#789087] sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p>Scans happen locally—even offline. Bug reports upload only with your consent.</p>
+            <p>Anonymous scan-performance metrics may be collected. Never images or decoded values.</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-3">
+            <span className="font-mono text-[11px]" aria-label={`Scanme version ${APP_VERSION}`}>
+              {APP_VERSION}
+            </span>
+            <span aria-hidden="true">·</span>
+            <a
+              href="https://github.com/Bedeh-A/ScanMe"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 font-bold text-[#567166] transition hover:text-[#17352b]"
+            >
+              GitHub
+              <ExternalLink className="size-3" aria-hidden="true" />
+            </a>
+          </div>
         </footer>
       </div>
 
