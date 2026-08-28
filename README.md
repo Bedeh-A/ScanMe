@@ -8,6 +8,16 @@ Scanme is an installable web app for finding multiple 1D and 2D barcodes in a
 single image. Paste from the clipboard, drag and drop, or choose a screenshot;
 decoding runs in the browser without sending the image to a server.
 
+## Screenshots
+
+### Desktop
+
+![Scanme desktop scanner](docs/screenshots/scanner-desktop.png)
+
+### Mobile
+
+<img src="docs/screenshots/scanner-mobile.png" alt="Scanme mobile scanner" width="390">
+
 ## What it does
 
 - Detects multiple barcodes instead of stopping after the first match.
