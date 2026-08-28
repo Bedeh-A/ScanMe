@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "scanme",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-08-28",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/reports", "/reports/*", "/robots.txt"]
+  },
+  "r2_buckets": [
+    {
+      "binding": "REPORTS",
+      "bucket_name": "scanme-reports"
+    }
+  ],
+  "vars": {
+    "ADMIN_EMAIL": "replace-after-access-provisioning",
+    "POLICY_AUD": "replace-after-access-provisioning",
+    "REPORT_HOSTNAME": "scan.bedeh.ro",
+    "TEAM_DOMAIN": "https://replace-me.cloudflareaccess.com"
+  },
+  "routes": [
+    {
+      "pattern": "scan.bedeh.ro",
+      "custom_domain": true
+    }
+  ]
+}

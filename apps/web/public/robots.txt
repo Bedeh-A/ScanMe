@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /reports
+Disallow: /api/admin/

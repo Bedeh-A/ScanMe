@@ -1,0 +1,3 @@
+{
+  "extends": "@scanme/config/tsconfig.base.json"
+}
