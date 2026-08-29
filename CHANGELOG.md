@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/Bedeh-A/ScanMe/compare/v0.2.0...v0.2.1) (2026-08-29)
+
+
+### Bug Fixes
+
+* include generated route tree in CI ([95ba798](https://github.com/Bedeh-A/ScanMe/commit/95ba7980287dba4a6657170223dae6d95223819c))
+
 ## [0.2.0](https://github.com/Bedeh-A/ScanMe/compare/v0.1.0...v0.2.0) (2026-08-29)
 
 
