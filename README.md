@@ -176,20 +176,23 @@ Worker API are configured.
 The included `apps/web/wrangler.jsonc` deploys the PWA and optional report system
 as a Cloudflare Worker with Static Assets.
 
-Full reporting requires:
+### Steps
 
-- A private R2 bucket named `scanme-reports`, bound as `REPORTS`.
-- A 30-day R2 lifecycle rule covering the entire bucket.
-- A managed Turnstile widget for the deployment hostname.
-- A self-hosted Cloudflare Access application covering `/reports`,
-  `/reports/*`, `/api/admin/reports`, and `/api/admin/reports/*`.
-- An exact-email Allow policy requiring Cloudflare's one-time PIN login method.
+#### 1. Configure the fork
 
-Replace the safe `ADMIN_EMAIL`, `POLICY_AUD`, and `TEAM_DOMAIN` placeholders in
-`apps/web/wrangler.jsonc` during private deployment provisioning. Do not commit the
-real owner email, Turnstile secret, or Cloudflare API token.
+In `apps/web/wrangler.jsonc`, replace the project-specific values:
 
-Create the R2 resources once:
+- `name`: a unique Worker name.
+- `r2_buckets[0].bucket_name`: the R2 bucket created in the next step.
+- `vars.REPORT_HOSTNAME`: your production hostname without `https://`.
+- `routes[0].pattern`: the same production hostname.
+
+Keep `workers_dev` and preview URLs disabled so alternate hostnames cannot bypass
+Cloudflare Access.
+
+#### 2. Create private report storage
+
+Choose a unique bucket name and use it both here and in `wrangler.jsonc`:
 
 ```bash
 cd apps/web
@@ -201,22 +204,85 @@ bunx wrangler r2 bucket lifecycle add scanme-reports scanme-reports-30-days \
 ```
 
 Do not add the lifecycle rule again if `scanme-reports-30-days` is already listed.
-Store the private Turnstile key through Wrangler's secure prompt:
+
+#### 3. Create the Turnstile widget
+
+In **Cloudflare Dashboard → Turnstile**, create a managed widget that permits your
+production hostname. Add `localhost` and `127.0.0.1` only if local report submission
+must be tested.
+
+Put the public site key in an ignored `apps/web/.env` file:
 
 ```bash
+VITE_PUBLIC_TURNSTILE_SITE_KEY=your_public_site_key
+```
+
+Keep the widget secret private; it is added to the Worker in step 6.
+
+#### 4. Protect the report viewer with Cloudflare Access
+
+1. Open **Cloudflare Zero Trust → Settings → Authentication → Login methods** and
+   enable **One-time PIN**.
+2. Open **Access → Applications**, add a **Self-hosted** application, and add these
+   public hostname paths for your production hostname:
+   - `/reports`
+   - `/reports/*`
+   - `/api/admin/reports`
+   - `/api/admin/reports/*`
+3. Select only **One-time PIN** as the identity provider and enable automatic
+   redirection to it.
+4. Set the session duration to `24h`, enable `HttpOnly` and Binding Cookie, and set
+   `SameSite` to **Lax**. Do not use Strict: the Access login callback returns from
+   the separate team domain and Strict can cause redirect failures.
+5. Add one **Allow** policy whose Include rule is the exact maintainer email. Do
+   not use an email-domain or Everyone rule.
+6. Copy the application's **Application Audience (AUD) Tag** and note the Zero
+   Trust team domain, such as `https://your-team.cloudflareaccess.com`.
+
+#### 5. Validate and deploy
+
+From the repository root:
+
+```bash
+bun install
+bun run check-types
+bun run test
+bun run build
 cd apps/web
-bunx wrangler secret put TURNSTILE_SECRET
+bunx wrangler deploy
 ```
 
-Then deploy:
+The admin API fails closed until its verification secrets are configured.
+
+#### 6. Store private Worker secrets
+
+Run each command and paste the requested value into Wrangler's secure prompt:
 
 ```bash
-bun run deploy
+bunx wrangler secret put TURNSTILE_SECRET
+bunx wrangler secret put ADMIN_EMAIL
+bunx wrangler secret put POLICY_AUD
+bunx wrangler secret put TEAM_DOMAIN
 ```
 
-Keep `workers_dev` and preview URLs disabled so alternate hostnames cannot bypass
-Cloudflare Access. `robots.txt` and `noindex` provide crawler guidance only; Access
-and Worker JWT validation are the security boundary.
+- `ADMIN_EMAIL` is the exact email used by the Access Allow policy.
+- `POLICY_AUD` is the application's Audience tag.
+- `TEAM_DOMAIN` includes `https://` and has no trailing slash.
+
+Never place these values or a Cloudflare API token in committed files.
+
+#### 7. Verify the deployment
+
+1. Confirm the public scanner loads at your production hostname.
+2. Open `/reports` in a signed-out browser and confirm Access requests a one-time
+   PIN.
+3. Confirm an email other than the configured maintainer is denied.
+4. Sign in as the maintainer and confirm the report viewer loads.
+5. Submit a consented test report and verify that it appears in the viewer.
+6. Confirm the R2 lifecycle still expires objects after 30 days.
+
+`robots.txt` and `noindex` provide crawler guidance only. Cloudflare Access and
+Worker-side JWT validation are the security boundary.
 
 ### Automated release deployment
 

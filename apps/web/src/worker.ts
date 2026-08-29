@@ -14,7 +14,12 @@ import {
   parseReportMetadata,
 } from "./worker/report-validation";
 
-export type WorkerEnv = Env & { TURNSTILE_SECRET: string };
+export type WorkerEnv = Env & {
+  ADMIN_EMAIL: string;
+  POLICY_AUD: string;
+  TEAM_DOMAIN: string;
+  TURNSTILE_SECRET: string;
+};
 
 const MAX_REQUEST_BYTES = MAX_REPORT_BYTES + 128 * 1024;
 const ADMIN_PREFIX = "/api/admin/reports";

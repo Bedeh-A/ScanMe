@@ -19,10 +19,7 @@
     }
   ],
   "vars": {
-    "ADMIN_EMAIL": "replace-after-access-provisioning",
-    "POLICY_AUD": "replace-after-access-provisioning",
-    "REPORT_HOSTNAME": "scan.bedeh.ro",
-    "TEAM_DOMAIN": "https://replace-me.cloudflareaccess.com"
+    "REPORT_HOSTNAME": "scan.bedeh.ro"
   },
   "routes": [
     {
