@@ -1,5 +1,6 @@
 import { HeadContent, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 
+import { AnalyticsConsentBanner } from "../components/analytics-consent";
 import "../index.css";
 
 export interface RouterAppContext {}
@@ -35,6 +36,7 @@ function RootComponent() {
     <>
       <HeadContent />
       <Outlet />
+      <AnalyticsConsentBanner />
     </>
   );
 }
