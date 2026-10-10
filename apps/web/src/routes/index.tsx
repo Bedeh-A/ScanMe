@@ -31,6 +31,7 @@ import {
 
 import { ReportScanDialog } from "@/components/report-scan-dialog";
 import { countBucket, durationBucket, textLengthBucket, track } from "@/lib/analytics";
+import { analyticsConfigured, requestAnalyticsPreferences } from "@/lib/analytics-consent";
 import {
   downloadBarcodeResults,
   type BarcodeExportFormat,
@@ -783,7 +784,21 @@ function HomeComponent() {
         <footer className="mt-12 flex flex-col gap-4 border-t border-[#17352b]/10 pt-5 text-xs leading-5 text-[#789087] sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p>Scans happen locally—even offline. Bug reports upload only with your consent.</p>
-            <p>Anonymous scan-performance metrics may be collected. Never images or decoded values.</p>
+            <p>
+              Anonymous usage analytics are collected only after you accept. Never images or decoded
+              values.
+            </p>
+            {analyticsConfigured() && (
+              <p className="mt-1">
+                <button
+                  type="button"
+                  onClick={requestAnalyticsPreferences}
+                  className="font-bold text-[#567166] underline decoration-[#17352b]/20 underline-offset-4 transition hover:text-[#17352b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f35f32]"
+                >
+                  Analytics preferences
+                </button>
+              </p>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-3">
             <span className="font-mono text-[11px]" aria-label={`Scanme version ${APP_VERSION}`}>

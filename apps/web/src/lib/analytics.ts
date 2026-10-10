@@ -1,5 +1,10 @@
 import type { PostHog } from "posthog-js";
 
+import {
+  currentAnalyticsDecision,
+  writeStoredConsent,
+  type AnalyticsConsent,
+} from "./analytics-consent";
 import type { ScanSource } from "./barcodes/types";
 
 type AnalyticsEvent =
@@ -40,14 +45,16 @@ let client: PostHog | null = null;
 let initializing = false;
 
 export function initializeAnalytics(): void {
-  const key = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
-  if (!key || client || initializing) {
-    return;
-  }
+  if (currentAnalyticsDecision() !== "accepted") return;
+
+  const key = import.meta.env.VITE_PUBLIC_POSTHOG_KEY?.trim();
+  if (!key || client || initializing) return;
 
   initializing = true;
   void import("posthog-js")
     .then(({ default: posthog }) => {
+      if (currentAnalyticsDecision() !== "accepted") return;
+
       posthog.init(key, {
         api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com",
         ui_host: "https://eu.posthog.com",
@@ -63,6 +70,7 @@ export function initializeAnalytics(): void {
         cookieless_mode: "always",
         advanced_disable_flags: true,
         before_send(event) {
+          if (currentAnalyticsDecision() !== "accepted") return null;
           if (!event || !allowedEvents.has(event.event as AnalyticsEvent)) {
             return null;
           }
@@ -85,7 +93,13 @@ export function initializeAnalytics(): void {
     });
 }
 
+export function setAnalyticsConsent(choice: AnalyticsConsent): void {
+  writeStoredConsent(choice);
+  if (currentAnalyticsDecision() === "accepted") initializeAnalytics();
+}
+
 export function track(event: AnalyticsEvent, properties: AnalyticsProperties = {}): void {
+  if (currentAnalyticsDecision() !== "accepted") return;
   if (!client || !navigator.onLine) return;
   client.capture(event, properties);
 }

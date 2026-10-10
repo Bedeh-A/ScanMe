@@ -48,6 +48,14 @@
 Barcode scanning, OCR, and scan history are browser-only. The core scanner does
 not require a backend.
 
+Optional usage analytics are separate from scanning. When a PostHog project key is
+configured, Scanme asks once whether anonymous analytics are OK. The choice is
+stored in localStorage, not a cookie, and can be changed from the footer. PostHog
+is loaded only after Accept, in cookieless mode, with person profiles disabled and
+a fixed list of coarse events. Decline, a missing key, Do Not Track, or Global
+Privacy Control leaves PostHog unloaded and sends nothing. Analytics never include
+images, filenames, barcode values, OCR text, or report contents.
+
 Missed-barcode reports are the only image upload path. Before submission, Scanme:
 
 1. Re-encodes the image as WebP to remove filenames and embedded metadata.
@@ -153,8 +161,9 @@ VITE_PUBLIC_TURNSTILE_SITE_KEY=
 VITE_APP_VERSION=development
 ```
 
-PostHog is optional. When enabled, Scanme records coarse product events without
-images, filenames, barcode values, OCR text, or report contents.
+PostHog is optional. When a key is set, Scanme asks before loading it and records
+coarse product events only after consent, without images, filenames, barcode
+values, OCR text, or report contents.
 
 ## Self-hosting the core scanner
 
