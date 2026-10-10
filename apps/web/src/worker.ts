@@ -7,9 +7,9 @@ import type {
   StoredReportMetadata,
 } from "./lib/reports/types";
 import {
+  inspectWebP,
   isMetadataKeyForReport,
   isReportId,
-  isWebP,
   metadataKeyFor,
   parseReportMetadata,
 } from "./worker/report-validation";
@@ -38,8 +38,8 @@ function json(data: unknown, status = 200, extraHeaders?: HeadersInit): Response
   });
 }
 
-function error(message: string, status: number): Response {
-  return json({ error: message }, status);
+function error(message: string, status: number, extraHeaders?: HeadersInit): Response {
+  return json({ error: message }, status, extraHeaders);
 }
 
 function noIndex(response: Response): Response {
@@ -49,8 +49,25 @@ function noIndex(response: Response): Response {
   return next;
 }
 
+function isConfiguredAdminEmail(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.length > 0 &&
+    value === value.trim()
+  );
+}
+
+export function matchesAdminEmail(claim: unknown, configuredEmail: unknown): boolean {
+  return (
+    isConfiguredAdminEmail(configuredEmail) &&
+    typeof claim === "string" &&
+    claim === configuredEmail
+  );
+}
+
 async function verifyAccess(request: Request, env: WorkerEnv): Promise<boolean> {
   if (
+    !isConfiguredAdminEmail(env.ADMIN_EMAIL) ||
     !env.POLICY_AUD ||
     env.POLICY_AUD.startsWith("replace-") ||
     !env.TEAM_DOMAIN ||
@@ -71,7 +88,7 @@ async function verifyAccess(request: Request, env: WorkerEnv): Promise<boolean> 
       issuer: env.TEAM_DOMAIN,
       audience: env.POLICY_AUD,
     });
-    return payload.email === env.ADMIN_EMAIL;
+    return matchesAdminEmail(payload.email, env.ADMIN_EMAIL);
   } catch {
     return false;
   }
@@ -131,6 +148,22 @@ async function submitReport(request: Request, env: WorkerEnv): Promise<Response>
     return error("Forbidden.", 403);
   }
 
+  let rateLimit: RateLimitOutcome;
+  try {
+    rateLimit = await env.REPORT_RATE_LIMITER.limit({
+      key: request.headers.get("CF-Connecting-IP") || "unknown",
+    });
+  } catch {
+    return error("Reports are temporarily unavailable. Please try again later.", 503, {
+      "Retry-After": "60",
+    });
+  }
+  if (!rateLimit.success) {
+    return error("Too many reports. Please try again later.", 429, {
+      "Retry-After": "60",
+    });
+  }
+
   const length = Number(request.headers.get("Content-Length"));
   if (!Number.isFinite(length) || length <= 0 || length > MAX_REQUEST_BYTES) {
     return error("The report is too large.", 413);
@@ -162,8 +195,8 @@ async function submitReport(request: Request, env: WorkerEnv): Promise<Response>
   }
 
   const metadata = parseReportMetadata(metadataValue);
-  const header = new Uint8Array(await image.slice(0, 12).arrayBuffer());
-  if (!metadata || !isWebP(header)) {
+  const imageBytes = new Uint8Array(await image.arrayBuffer());
+  if (!metadata || !inspectWebP(imageBytes)) {
     return error("Invalid report.", 400);
   }
   if (!(await verifyTurnstile(request, env, turnstileToken))) {

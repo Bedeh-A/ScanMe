@@ -2,8 +2,13 @@ import {
   REPORT_NOTE_MAX_LENGTH,
   type ReportSubmissionMetadata,
 } from "../lib/reports/types";
+import {
+  MAX_REPORT_EDGE,
+  MAX_REPORT_PIXELS,
+} from "../lib/reports/report-image";
 
 const ALLOWED_SOURCES = new Set(["paste", "upload", "drop"]);
+const ALLOWED_WEBP_CHUNKS = new Set(["ALPH", "VP8 ", "VP8L", "VP8X"]);
 const FORMAT_PATTERN = /^[A-Za-z0-9][A-Za-z0-9 .+_-]{0,63}$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -60,12 +65,129 @@ export function parseReportMetadata(value: string): ReportSubmissionMetadata | n
   };
 }
 
-export function isWebP(bytes: Uint8Array): boolean {
-  if (bytes.length < 12) return false;
-  return (
-    String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
-    String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
+export interface WebPDimensions {
+  width: number;
+  height: number;
+}
+
+function chunkName(bytes: Uint8Array, offset: number): string {
+  return String.fromCharCode(
+    bytes[offset] ?? 0,
+    bytes[offset + 1] ?? 0,
+    bytes[offset + 2] ?? 0,
+    bytes[offset + 3] ?? 0,
   );
+}
+
+function safeDimensions(width: number, height: number): WebPDimensions | null {
+  if (
+    width < 1 ||
+    height < 1 ||
+    width > MAX_REPORT_EDGE ||
+    height > MAX_REPORT_EDGE ||
+    width * height > MAX_REPORT_PIXELS
+  ) {
+    return null;
+  }
+  return { width, height };
+}
+
+function dimensionsForChunk(
+  type: string,
+  bytes: Uint8Array,
+  dataOffset: number,
+  size: number,
+  view: DataView,
+): WebPDimensions | null {
+  if (type === "VP8X") {
+    if (size !== 10) return null;
+    const width =
+      1 +
+      (bytes[dataOffset + 4] ?? 0) +
+      ((bytes[dataOffset + 5] ?? 0) << 8) +
+      ((bytes[dataOffset + 6] ?? 0) << 16);
+    const height =
+      1 +
+      (bytes[dataOffset + 7] ?? 0) +
+      ((bytes[dataOffset + 8] ?? 0) << 8) +
+      ((bytes[dataOffset + 9] ?? 0) << 16);
+    return safeDimensions(width, height);
+  }
+
+  if (type === "VP8 ") {
+    if (
+      size < 10 ||
+      ((bytes[dataOffset] ?? 1) & 1) !== 0 ||
+      bytes[dataOffset + 3] !== 0x9d ||
+      bytes[dataOffset + 4] !== 0x01 ||
+      bytes[dataOffset + 5] !== 0x2a
+    ) {
+      return null;
+    }
+    const width = view.getUint16(dataOffset + 6, true) & 0x3fff;
+    const height = view.getUint16(dataOffset + 8, true) & 0x3fff;
+    return safeDimensions(width, height);
+  }
+
+  if (type === "VP8L") {
+    if (size < 5 || bytes[dataOffset] !== 0x2f) return null;
+    const bits = view.getUint32(dataOffset + 1, true);
+    if (bits >>> 29 !== 0) return null;
+    const width = (bits & 0x3fff) + 1;
+    const height = ((bits >>> 14) & 0x3fff) + 1;
+    return safeDimensions(width, height);
+  }
+
+  return null;
+}
+
+export function inspectWebP(bytes: Uint8Array): WebPDimensions | null {
+  if (
+    bytes.length < 20 ||
+    chunkName(bytes, 0) !== "RIFF" ||
+    chunkName(bytes, 8) !== "WEBP"
+  ) {
+    return null;
+  }
+
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (view.getUint32(4, true) + 8 !== bytes.length) return null;
+
+  let offset = 12;
+  let dimensions: WebPDimensions | null = null;
+  let extendedChunks = 0;
+  let imageChunks = 0;
+
+  while (offset < bytes.length) {
+    if (offset + 8 > bytes.length) return null;
+    const type = chunkName(bytes, offset);
+    if (!ALLOWED_WEBP_CHUNKS.has(type)) return null;
+    const size = view.getUint32(offset + 4, true);
+    const dataOffset = offset + 8;
+    const dataEnd = dataOffset + size;
+    const paddedEnd = dataEnd + (size % 2);
+    if (dataEnd > bytes.length || paddedEnd > bytes.length) return null;
+
+    if (type === "VP8X" || type === "VP8 " || type === "VP8L") {
+      const chunkDimensions = dimensionsForChunk(type, bytes, dataOffset, size, view);
+      if (!chunkDimensions) return null;
+      if (
+        dimensions &&
+        (dimensions.width !== chunkDimensions.width ||
+          dimensions.height !== chunkDimensions.height)
+      ) {
+        return null;
+      }
+      dimensions = chunkDimensions;
+      if (type === "VP8X") extendedChunks += 1;
+      if (type === "VP8 " || type === "VP8L") imageChunks += 1;
+      if (extendedChunks > 1 || imageChunks > 1) return null;
+    }
+
+    offset = paddedEnd;
+  }
+
+  return offset === bytes.length && imageChunks === 1 ? dimensions : null;
 }
 
 export function isReportId(value: string): boolean {

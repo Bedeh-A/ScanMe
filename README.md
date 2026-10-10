@@ -193,11 +193,15 @@ In `apps/web/wrangler.jsonc`, replace the project-specific values:
 
 - `name`: a unique Worker name.
 - `r2_buckets[0].bucket_name`: the R2 bucket created in the next step.
+- `ratelimits[0].namespace_id`: a positive integer unique within your Cloudflare
+  account.
 - `vars.REPORT_HOSTNAME`: your production hostname without `https://`.
 - `routes[0].pattern`: the same production hostname.
 
 Keep `workers_dev` and preview URLs disabled so alternate hostnames cannot bypass
-Cloudflare Access.
+Cloudflare Access. The included rate-limit binding permits five report attempts per
+IP address per minute in each Cloudflare location; add a stricter WAF rule or global
+quota if your deployment is exposed to sustained abuse.
 
 #### 2. Create private report storage
 

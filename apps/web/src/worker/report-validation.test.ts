@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  inspectWebP,
   isMetadataKeyForReport,
   isReportId,
-  isWebP,
   metadataKeyFor,
   parseReportMetadata,
 } from "./report-validation";
@@ -15,6 +15,21 @@ const validMetadata = {
   appVersion: "1.0.0",
   note: "The lower code was missed.",
 };
+
+function structuralWebP(width = 2, height = 2): Uint8Array {
+  const bytes = new Uint8Array(26);
+  bytes.set(new TextEncoder().encode("RIFF"), 0);
+  new DataView(bytes.buffer).setUint32(4, bytes.length - 8, true);
+  bytes.set(new TextEncoder().encode("WEBPVP8L"), 8);
+  new DataView(bytes.buffer).setUint32(16, 5, true);
+  bytes[20] = 0x2f;
+  new DataView(bytes.buffer).setUint32(
+    21,
+    (width - 1) | ((height - 1) << 14),
+    true,
+  );
+  return bytes;
+}
 
 describe("parseReportMetadata", () => {
   it("accepts bounded non-sensitive metadata", () => {
@@ -48,9 +63,14 @@ describe("parseReportMetadata", () => {
 describe("report object validation", () => {
   const id = "34ea99b2-d755-4c09-9f0c-a9d71af85948";
 
-  it("validates WebP magic bytes instead of trusting MIME type", () => {
-    expect(isWebP(new TextEncoder().encode("RIFF1234WEBP"))).toBe(true);
-    expect(isWebP(new TextEncoder().encode("<html></html>"))).toBe(false);
+  it("validates WebP structure and dimensions instead of trusting magic bytes", () => {
+    expect(inspectWebP(structuralWebP(1200, 800))).toEqual({
+      width: 1200,
+      height: 800,
+    });
+    expect(inspectWebP(new TextEncoder().encode("RIFF1234WEBPpayload"))).toBeNull();
+    expect(inspectWebP(structuralWebP(3000, 1))).toBeNull();
+    expect(inspectWebP(structuralWebP(2560, 2560))).toBeNull();
   });
 
   it("requires random UUID report identifiers", () => {

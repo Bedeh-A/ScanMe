@@ -13,7 +13,6 @@
   },
   "devDependencies": {
     "@scanme/config": "workspace:*",
-    "@scanme/infra": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "catalog:"
   }

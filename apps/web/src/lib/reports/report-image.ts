@@ -1,5 +1,5 @@
-const MAX_REPORT_EDGE = 2560;
-const MAX_REPORT_PIXELS = 6_000_000;
+export const MAX_REPORT_EDGE = 2560;
+export const MAX_REPORT_PIXELS = 6_000_000;
 export const MAX_REPORT_BYTES = 5 * 1024 * 1024;
 
 export interface ReportImageDimensions {
