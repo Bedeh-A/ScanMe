@@ -30,12 +30,14 @@ describe("privacySignalDeclines", () => {
 
 describe("analyticsDecision", () => {
   it("stays off and does not prompt when analytics are not configured", () => {
-    expect(analyticsConfigured(undefined)).toBe(false);
+    vi.stubEnv("VITE_PUBLIC_POSTHOG_KEY", "");
+    expect(analyticsConfigured()).toBe(false);
     expect(analyticsConfigured("")).toBe(false);
     expect(analyticsConfigured("  ")).toBe(false);
     expect(
       analyticsDecision({ configured: false, stored: null, privacyDeclined: false }),
     ).toBe("off");
+    vi.unstubAllEnvs();
   });
 
   it("prompts only when a key is set and there is no choice or privacy signal", () => {
