@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/Bedeh-A/ScanMe/compare/v0.3.0...v0.3.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* keep the analytics consent test off when a PostHog key is set ([e21c116](https://github.com/Bedeh-A/ScanMe/commit/e21c116b4508d93d7fc3b3bc4ecb0c15e1222613))
+
 ## [0.3.0](https://github.com/Bedeh-A/ScanMe/compare/v0.2.1...v0.3.0) (2026-10-10)
 
 
