@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/Bedeh-A/ScanMe/compare/v0.3.1...v0.3.2) (2026-10-10)
+
+
+### Bug Fixes
+
+* keep the shadcn stylesheet available for the UI build ([8117635](https://github.com/Bedeh-A/ScanMe/commit/8117635aacd40f6842e8e994c51456d078fbe3aa))
+
 ## [0.3.1](https://github.com/Bedeh-A/ScanMe/compare/v0.3.0...v0.3.1) (2026-10-10)
 
 
