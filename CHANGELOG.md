@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/Bedeh-A/ScanMe/compare/v0.2.1...v0.3.0) (2026-10-10)
+
+
+### Features
+
+* ask before loading anonymous usage analytics ([cab7cc1](https://github.com/Bedeh-A/ScanMe/commit/cab7cc1b74cd7abbe8b195b0638d30370e2a494f))
+* ask before loading anonymous usage analytics ([9a4a2bd](https://github.com/Bedeh-A/ScanMe/commit/9a4a2bdb3c93fdfbd1036b5e84012b0f66fbbcbc))
+
+
+### Bug Fixes
+
+* rate limit report uploads and reject malformed WebP ([5c70ce8](https://github.com/Bedeh-A/ScanMe/commit/5c70ce8c58ea73d6b7c31a3becab0b3de6122dd3))
+
 ## [0.2.1](https://github.com/Bedeh-A/ScanMe/compare/v0.2.0...v0.2.1) (2026-08-29)
 
 
